@@ -1,0 +1,30 @@
+version: '3'
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - 5672:5672
+      - 15672:15672
+  django:
+    build: .
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/code
+    ports:
+      - 8000:8000
+    depends_on:
+      - rabbitmq
+  celery:
+    build: .
+    command: celery -A notification_service worker --loglevel=info
+    volumes:
+      - .:/code
+    depends_on:
+      - rabbitmq
+  celery-beat:
+    build: .
+    command: celery -A notification_service beat --loglevel=info
+    volumes:
+      - .:/code
+    depends_on:
+      - rabbitmq
